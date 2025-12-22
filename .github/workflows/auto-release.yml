@@ -3,7 +3,7 @@ name: Publish & Release (GitHub Packages)
 on:
   push:
     branches:
-      - master
+      - main
 
 permissions:
   contents: write
@@ -14,15 +14,19 @@ jobs:
     runs-on: ubuntu-latest
     environment: PAT
 
+    # 🔑 CRITICAL: applies to ALL node/yarn/npm commands
+    env:
+      NODE_OPTIONS: --openssl-legacy-provider
+
     steps:
-      # 1️⃣ Checkout using GitHub PAT
+      # 1️⃣ Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT }}
           fetch-depth: 0
 
-      # 2️⃣ Setup Node.js for GitHub Packages
+      # 2️⃣ Setup Node.js (GitHub Packages)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -30,30 +34,23 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: '@srkdev404-cyber'
 
-      # 3️⃣ Install dependencies (Yarn)
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: yarn install
 
-      # 4️⃣ Build (webpack 4 needs legacy OpenSSL)
-      - name: Build package
-        env:
-          NODE_OPTIONS: --openssl-legacy-provider
-        run: yarn run build
-
-      # 5️⃣ Publish to GitHub Packages (PAT only)
+      # 4️⃣ Publish (triggers prepublish → build)
       - name: Publish to GitHub Packages
         env:
-          NODE_OPTIONS: --openssl-legacy-provider
           NODE_AUTH_TOKEN: ${{ secrets.PAT }}
         run: npm publish
 
-      # 6️⃣ Read version from package.json
+      # 5️⃣ Read version
       - name: Read version
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      # 7️⃣ Create GitHub Release
+      # 6️⃣ GitHub Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
