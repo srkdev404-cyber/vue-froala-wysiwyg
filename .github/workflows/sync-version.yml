@@ -10,7 +10,7 @@ permissions:
 jobs:
   sync-version:
     runs-on: ubuntu-latest
-    environment: PAT   # <-- makes PAT secret available
+    environment: PAT
 
     steps:
       - name: Checkout repository
@@ -27,13 +27,13 @@ jobs:
         run: |
           npm version $VERSION --no-git-tag-version
 
-      - name: Install dependencies (first time safe)
-        run: npm install
+      - name: Install dependencies (update lockfile)
+        run: yarn install
 
       - name: Commit and push changes
         run: |
           git config user.name "srkdev404-cyber"
           git config user.email "srkdev404@gmail.com"
-          git add package.json package-lock.json
+          git add package.json yarn.lock
           git commit -m "chore: bump version to $VERSION"
           git push origin master
