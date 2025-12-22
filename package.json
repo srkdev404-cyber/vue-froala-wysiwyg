@@ -3,7 +3,7 @@
   "version": "4.0.17",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
-  }
+  },
   "description": "Vue plugin for Froala WYSIWYG HTML rich text editor.",
   "author": "Froala Labs (https://www.froala.com/)",
   "license": "https://froala.com/wysiwyg-editor/terms/",
