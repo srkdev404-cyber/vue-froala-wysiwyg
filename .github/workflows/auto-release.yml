@@ -15,11 +15,14 @@ jobs:
     environment: PAT
 
     steps:
+      # 1️⃣ Checkout using GitHub PAT
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT }}
+          fetch-depth: 0
 
+      # 2️⃣ Setup Node.js for GitHub Packages
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -27,25 +30,30 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: '@srkdev404-cyber'
 
-      # Required for webpack 4 + Node 18
-      - name: Enable OpenSSL legacy provider
-        run: |
-          echo "NODE_OPTIONS=--openssl-legacy-provider" >> $GITHUB_ENV
-
+      # 3️⃣ Install dependencies (Yarn)
       - name: Install dependencies
         run: yarn install
 
-      # ✅ Auth ONLY via GitHub PAT
+      # 4️⃣ Build (webpack 4 needs legacy OpenSSL)
+      - name: Build package
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
+        run: yarn run build
+
+      # 5️⃣ Publish to GitHub Packages (PAT only)
       - name: Publish to GitHub Packages
         env:
+          NODE_OPTIONS: --openssl-legacy-provider
           NODE_AUTH_TOKEN: ${{ secrets.PAT }}
         run: npm publish
 
+      # 6️⃣ Read version from package.json
       - name: Read version
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
+      # 7️⃣ Create GitHub Release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
