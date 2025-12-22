@@ -26,19 +26,21 @@ jobs:
           node-version: 18
           registry-url: https://registry.npmjs.org/
 
+      # 🔑 MUST be before yarn install / build
+      - name: Enable OpenSSL legacy provider
+        run: |
+          export NODE_OPTIONS=--openssl-legacy-provider
+          echo "NODE_OPTIONS=--openssl-legacy-provider" >> $GITHUB_ENV
+
       - name: Configure npm auth using PAT
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.PAT }}" > ~/.npmrc
 
-      - name: Enable OpenSSL legacy provider
-        run: |
-          echo "NODE_OPTIONS=--openssl-legacy-provider" >> $GITHUB_ENV
+      - name: Install dependencies (Yarn)
+        run: yarn install --frozen-lockfile
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build package
-        run: npm run build
+      - name: Build package (Yarn)
+        run: yarn run build
 
       - name: Publish to npm
         run: npm publish --access public
