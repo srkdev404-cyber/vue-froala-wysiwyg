@@ -1,6 +1,9 @@
 {
-  "name": "vue-froala-wysiwyg",
-  "version": "4.7.1",
+  "name": "@srkdev404-cyber/vue-froala-wysiwyg",
+  "version": "4.0.17",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
   "description": "Vue plugin for Froala WYSIWYG HTML rich text editor.",
   "author": "Froala Labs (https://www.froala.com/)",
   "license": "https://froala.com/wysiwyg-editor/terms/",
