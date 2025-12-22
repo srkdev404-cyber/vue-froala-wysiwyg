@@ -11,7 +11,7 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    environment: PAT   # <-- same environment
+    environment: PAT
 
     steps:
       - name: Checkout repository
@@ -30,8 +30,15 @@ jobs:
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.PAT }}" > ~/.npmrc
 
+      - name: Enable OpenSSL legacy provider
+        run: |
+          echo "NODE_OPTIONS=--openssl-legacy-provider" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: npm install
+
+      - name: Build package
+        run: npm run build
 
       - name: Publish to npm
         run: npm publish --access public
