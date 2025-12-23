@@ -16,42 +16,51 @@ jobs:
 
     steps:
       # 1️⃣ Checkout
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT }}
           fetch-depth: 0
 
-      # 2️⃣ Setup Node.js 16 (CRITICAL)
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      # 2️⃣ Setup Node.js
+      - uses: actions/setup-node@v4
         with:
           node-version: 16
           registry-url: https://npm.pkg.github.com
           scope: '@srkdev404-cyber'
 
-      # 3️⃣ Install dependencies
-      - name: Install dependencies
-        run: yarn install
+      # 3️⃣ Install deps
+      - run: yarn install
 
-      # 4️⃣ Build (webpack 4 – SAFE on Node 16)
-      - name: Build package
-        run: yarn run build
+      # 4️⃣ Build
+      - run: yarn run build
 
-      # 5️⃣ Publish to GitHub Packages
-      - name: Publish to GitHub Packages
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.PAT }}
-        run: npm publish
-
-      # 6️⃣ Read version
+      # 5️⃣ Read version
       - name: Read version
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      # 7️⃣ Create GitHub Release
+      # 6️⃣ Check if version already exists (CRITICAL)
+      - name: Check npm version existence
+        run: |
+          if npm view @srkdev404-cyber/vue-froala-wysiwyg-child-E@${{ env.VERSION }} \
+            --registry=https://npm.pkg.github.com >/dev/null 2>&1; then
+            echo "Version ${{ env.VERSION }} already exists. Skipping publish."
+            echo "SKIP_PUBLISH=true" >> $GITHUB_ENV
+          else
+            echo "SKIP_PUBLISH=false" >> $GITHUB_ENV
+          fi
+
+      # 7️⃣ Publish (only if new version)
+      - name: Publish to GitHub Packages
+        if: env.SKIP_PUBLISH == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PAT }}
+        run: npm publish
+
+      # 8️⃣ Create GitHub Release (only if new)
       - name: Create GitHub Release
+        if: env.SKIP_PUBLISH == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
