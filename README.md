@@ -45,7 +45,6 @@ const app = createApp(App);
 app.use(VueFroala);
 app.mount('#app');
 ```
-
 #### App.vue file:
 ```javascript
 <template>
