@@ -19,8 +19,6 @@ Install `vue-froala-wysiwyg` from `npm`
 npm install vue-froala-wysiwyg --save
 ```
 
-
-
 ## Integration
 
 #### 1. Require and use Froala Editor component inside your application.
