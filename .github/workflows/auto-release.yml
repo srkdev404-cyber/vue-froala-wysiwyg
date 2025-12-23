@@ -34,13 +34,20 @@ jobs:
       # 4️⃣ Build
       - run: yarn run build
 
-      # 5️⃣ Read version
+      # 5️⃣ Authenticate npm for GitHub Packages (CRITICAL)
+      - name: Authenticate npm
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PAT }}
+
+      # 6️⃣ Read version
       - name: Read version
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      # 6️⃣ Check if version already exists (CRITICAL)
+      # 7️⃣ Check if version already exists
       - name: Check npm version existence
         run: |
           if npm view @srkdev404-cyber/vue-froala-wysiwyg-child-E@${{ env.VERSION }} \
@@ -51,14 +58,14 @@ jobs:
             echo "SKIP_PUBLISH=false" >> $GITHUB_ENV
           fi
 
-      # 7️⃣ Publish (only if new version)
+      # 8️⃣ Publish (only if new)
       - name: Publish to GitHub Packages
         if: env.SKIP_PUBLISH == 'false'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.PAT }}
         run: npm publish
 
-      # 8️⃣ Create GitHub Release (only if new)
+      # 9️⃣ Create GitHub Release (only if new)
       - name: Create GitHub Release
         if: env.SKIP_PUBLISH == 'false'
         uses: softprops/action-gh-release@v2
