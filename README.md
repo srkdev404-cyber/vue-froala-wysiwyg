@@ -74,7 +74,6 @@ export default {
 ```
 
 
-
 #### 2. Make sure you have the right Webpack settings for loading the CSS files.
 
 ```javascript
