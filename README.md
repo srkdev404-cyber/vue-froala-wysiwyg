@@ -10,7 +10,6 @@
 
 - v3 later
   - Vue.js 3.x
-
 ## Installation
 
 Install `vue-froala-wysiwyg` from `npm`
