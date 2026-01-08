@@ -13,30 +13,47 @@ jobs:
     environment: PAT
 
     steps:
+      # --------------------------------------------
+      # Checkout repository
+      # --------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.PAT }}
+          fetch-depth: 0
 
-      - name: Read version from payload
+      # --------------------------------------------
+      # Load version & release notes (Yii2-style)
+      # --------------------------------------------
+      - name: Load payload
         run: |
-          echo "VERSION=${{ github.event.client_payload.version }}" >> $GITHUB_ENV
+          VERSION="${{ github.event.client_payload.version }}"
+          VERSION="${VERSION//,/\.}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "${{ github.event.client_payload.release_notes }}" > release_notes.txt
+          echo "Incoming version: $VERSION"
 
-      # Step b
+      # --------------------------------------------
+      # Update package.json version
+      # --------------------------------------------
       - name: Update package.json version
         run: |
-          npm version $VERSION --no-git-tag-version
+          npm version "$VERSION" --no-git-tag-version
 
-      # Step c
+      # --------------------------------------------
+      # Install dependencies
+      # --------------------------------------------
       - name: Install dependencies
         run: yarn install
 
-      # Step e (commit)
+      # --------------------------------------------
+      # Commit & push (includes release notes)
+      # --------------------------------------------
       - name: Commit changes
         run: |
           git config user.name "srkdev404-cyber"
           git config user.email "srkdev404@gmail.com"
-          git add package.json yarn.lock
-          git commit -m "chore: bump version to $VERSION"
+
+          git add package.json yarn.lock release_notes.txt
+          git commit -m "chore: release v$VERSION" || echo "Nothing to commit"
           git push origin master
-          
