@@ -29,9 +29,29 @@ jobs:
         run: |
           VERSION="${{ github.event.client_payload.version }}"
           VERSION="${VERSION//,/\.}"
+
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "${{ github.event.client_payload.release_notes }}" > release_notes.txt
+
           echo "Incoming version: $VERSION"
+
+      # --------------------------------------------
+      # Validate SemVer (fail fast)
+      # --------------------------------------------
+      - name: Validate version format
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format: $VERSION"
+            exit 1
+          fi
+
+      # --------------------------------------------
+      # Setup Node.js (legacy-safe)
+      # --------------------------------------------
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16
 
       # --------------------------------------------
       # Update package.json version
@@ -41,9 +61,11 @@ jobs:
           npm version "$VERSION" --no-git-tag-version
 
       # --------------------------------------------
-      # Install dependencies
+      # Install dependencies (OpenSSL safe)
       # --------------------------------------------
       - name: Install dependencies
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
         run: yarn install
 
       # --------------------------------------------
@@ -56,4 +78,5 @@ jobs:
 
           git add package.json yarn.lock release_notes.txt
           git commit -m "chore: release v$VERSION" || echo "Nothing to commit"
+
           git push origin master
