@@ -1,6 +1,6 @@
 {
   "name": "@srkdev404-cyber/vue-froala-wysiwyg",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },

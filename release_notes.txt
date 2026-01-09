@@ -1,2 +1,2 @@
-hello Celestial!
-testing child A without env , using only repo secrets
+Dispatch-Demo-Child-A
+No Env , only Repo secrets
