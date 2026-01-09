@@ -46,7 +46,7 @@ jobs:
           fi
 
       # --------------------------------------------
-      # Setup Node.js (legacy-safe)
+      # Setup Node.js (stable & compatible)
       # --------------------------------------------
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -61,11 +61,9 @@ jobs:
           npm version "$VERSION" --no-git-tag-version
 
       # --------------------------------------------
-      # Install dependencies (OpenSSL safe)
+      # Install dependencies (NO legacy OpenSSL)
       # --------------------------------------------
       - name: Install dependencies
-        env:
-          NODE_OPTIONS: --openssl-legacy-provider
         run: yarn install
 
       # --------------------------------------------
