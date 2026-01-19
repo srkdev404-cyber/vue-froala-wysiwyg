@@ -114,6 +114,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
         run: |
-          gh release create "vue-v${VERSION}" \
-            --title "Vue Release v${VERSION}" \
+          gh release create "v${VERSION}" \
+            --title "Release ${VERSION}" \
             --notes "${{ github.event.pull_request.body }}"
