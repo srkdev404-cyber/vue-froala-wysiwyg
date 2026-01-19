@@ -1,7 +1,8 @@
-name: Publish & Release (GitHub Packages)
+name: Auto Release – Vue
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - master
 
@@ -11,12 +12,34 @@ permissions:
 
 jobs:
   release:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-    environment: PAT
 
     steps:
       # --------------------------------------------
-      # Checkout repository
+      # Check release intent
+      # --------------------------------------------
+      - name: Check release intent
+        id: check
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PAT }}
+          script: |
+            const title = context.payload.pull_request.title || '';
+            const body  = context.payload.pull_request.body || '';
+            const text  = `${title} ${body}`;
+
+            core.setOutput(
+              'release',
+              /release:\s*yes/i.test(text) ? 'true' : 'false'
+            );
+
+      - name: Stop if not a release PR
+        if: steps.check.outputs.release == 'false'
+        run: exit 0
+
+      # --------------------------------------------
+      # Checkout merged code (full history)
       # --------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,7 +48,23 @@ jobs:
           fetch-depth: 0
 
       # --------------------------------------------
-      # Setup Node.js
+      # Resolve & validate version
+      # --------------------------------------------
+      - name: Resolve & validate version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          VERSION="${VERSION//,/\.}"
+
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid version format: $VERSION"
+            exit 1
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Resolved version: $VERSION"
+
+      # --------------------------------------------
+      # Setup Node.js (GitHub Packages)
       # --------------------------------------------
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -47,25 +86,7 @@ jobs:
         run: yarn run build
 
       # --------------------------------------------
-      # Authenticate npm
-      # --------------------------------------------
-      - name: Authenticate npm
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.PAT }}
-
-      # --------------------------------------------
-      # Read version from package.json
-      # --------------------------------------------
-      - name: Read version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Version: $VERSION"
-
-      # --------------------------------------------
-      # Check if npm version already exists
+      # Check if version already published
       # --------------------------------------------
       - name: Check npm version existence
         run: |
@@ -86,14 +107,13 @@ jobs:
         run: npm publish
 
       # --------------------------------------------
-      # Create GitHub Release (Yii2-style, NO auto notes)
+      # Create GitHub Release (PR body → release notes)
       # --------------------------------------------
       - name: Create GitHub Release
         if: env.SKIP_PUBLISH == 'false'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ env.VERSION }}
-          name: v${{ env.VERSION }}
-          body_path: release_notes.txt
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
+        run: |
+          gh release create "vue-v${VERSION}" \
+            --title "Vue Release v${VERSION}" \
+            --notes "${{ github.event.pull_request.body }}"
